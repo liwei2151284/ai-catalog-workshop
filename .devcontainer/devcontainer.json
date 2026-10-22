@@ -15,8 +15,10 @@
     "vscode": {
       "extensions": ["GitHub.copilot", "GitHub.copilot-chat"],
       "settings": {
-        "chat.plugins.marketplaces": ["https://github.com/jfrog/vscode-plugin/"]
-      }
-    }
-  }
+        "chat.plugins.marketplaces": ["https://github.com/jfrog/vscode-plugin/"],
+        "chat.plugins.enabled": true,
+        "chat.useHooks": true
+     }
+   }
+ }
 }

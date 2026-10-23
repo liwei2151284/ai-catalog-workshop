@@ -2,17 +2,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Setting up JFrog Agent Plugin ==="
+echo "[JFrog] Checking prerequisites..."
 
-# Require Node.js 22+
 if ! command -v node >/dev/null 2>&1; then
-  echo "ERROR: Node.js is not installed."
+  echo "ERROR: Node.js is missing."
   exit 1
 fi
 
-NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+NODE_MAJOR="$(node -p 'Number(process.versions.node.split(".")[0])')"
 if [ "$NODE_MAJOR" -lt 22 ]; then
-  echo "ERROR: Node.js 22+ is required by Copilot CLI."
+  echo "ERROR: Node.js 22+ is required."
   exit 1
 fi
 
@@ -21,18 +20,74 @@ if ! command -v copilot >/dev/null 2>&1; then
   npm install -g @github/copilot
 fi
 
-# Register the official JFrog plugin marketplace
-if ! copilot plugin marketplace list 2>/dev/null \
-  | grep -Fq 'jfrog-agent-plugins'; then
+echo "[JFrog] Checking plugin marketplace..."
+
+MARKETPLACES="$(copilot plugin marketplace list 2>/dev/null || true)"
+
+if ! printf '%s\n' "$MARKETPLACES" |
+  grep -F 'jfrog-agent-plugins' >/dev/null; then
   copilot plugin marketplace add jfrog/vscode-plugin
 fi
 
-# Install the JFrog plugin if missing
-if ! copilot plugin list 2>/dev/null \
-  | grep -Fq 'jfrog'; then
+# Check whether the official JFrog plugin is installed
+plugin_installed() {
+  copilot plugin list --json |
+    node -e '
+      let data = "";
+      process.stdin.on("data", c => data += c);
+      process.stdin.on("end", () => {
+        try {
+          const plugins = JSON.parse(data);
+          const found = plugins.some(p =>
+            p.name === "jfrog" &&
+            p.marketplace === "jfrog-agent-plugins"
+          );
+          process.exit(found ? 0 : 1);
+        } catch {
+          process.exit(1);
+        }
+      });
+    '
+}
+
+plugin_enabled() {
+  copilot plugin list --json |
+    node -e '
+      let data = "";
+      process.stdin.on("data", c => data += c);
+      process.stdin.on("end", () => {
+        try {
+          const plugins = JSON.parse(data);
+          const found = plugins.some(p =>
+            p.name === "jfrog" &&
+            p.marketplace === "jfrog-agent-plugins" &&
+            p.enabled === true
+          );
+          process.exit(found ? 0 : 1);
+        } catch {
+          process.exit(1);
+        }
+      });
+    '
+}
+
+if ! plugin_installed; then
+  echo "[JFrog] Installing official plugin..."
   copilot plugin install jfrog@jfrog-agent-plugins
 fi
 
-echo "=== Installed Copilot plugins ==="
+if ! plugin_enabled; then
+  echo "[JFrog] Enabling plugin..."
+  copilot plugin enable jfrog
+fi
+
+echo "[JFrog] Final plugin status:"
 copilot plugin list
-echo "=== JFrog setup check completed ==="
+
+if [ -z "${JFROG_ACCESS_TOKEN:-}" ]; then
+  echo "WARNING: JFROG_ACCESS_TOKEN is not available in this process."
+else
+  echo "[JFrog] Access token environment variable is present."
+fi
+
+echo "[JFrog] Setup completed."

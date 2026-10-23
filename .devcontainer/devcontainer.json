@@ -1,4 +1,3 @@
-
 {
   "name": "JFrog Workshop",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
@@ -22,5 +21,6 @@
         ]
       }
     }
-  }
+  },
+  "postCreateCommand": "bash .devcontainer/setup-jfrog-plugin.sh"
 }

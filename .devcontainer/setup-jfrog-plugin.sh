@@ -91,3 +91,18 @@ else
 fi
 
 echo "[JFrog] Setup completed."
+
+if ! command -v jf >/dev/null 2>&1; then
+  curl -fL https://install-cli.jfrog.io | sh
+fi
+jf --version
+
+if [ -z "${JFROG_ACCESS_TOKEN:-}" ]; then
+  printf '%s\n' '找不到 JFROG_ACCESS_TOKEN；請確認 Codespaces Secret 已授權此 Repository，然後重建 Codespace。'
+else
+  printf '%s' "$JFROG_ACCESS_TOKEN" | jf config add workshop \
+    --url https://alexwangtrial.jfrog.io \
+    --access-token-stdin --interactive=false --overwrite &&
+    jf config use workshop &&
+    jf rt ping --server-id workshop
+fi

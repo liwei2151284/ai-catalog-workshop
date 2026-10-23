@@ -2,11 +2,6 @@
 {
   "name": "JFrog Workshop",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22"
-    }
-  },
   "remoteEnv": {
     "JFROG_URL": "https://alexwangtrial.jfrog.io",
     "JFROG_PLATFORM_URL": "alexwangtrial.jfrog.io",
@@ -27,6 +22,5 @@
         ]
       }
     }
-  },
-  "postStartCommand": "bash .devcontainer/setup-jfrog-plugin.sh"
+  }
 }
